@@ -9,13 +9,8 @@ def http2json(http, isResponse, url):
     ret = {}
     pos = http.find('\r\n\r\n'.encode('utf-8'))
     body = http[pos + 4:]
-    # body有可能是二进制文件，如图片、视频，此时会decode出错，应该直接输出文件
-    # TODO
+    # body有可能是二进制文件，如图片、视频，此时会decode出错，这里采用base64的方式解决
     body = base64.encodebytes(body).decode('utf-8')
-    # try:
-    #     body = body.decode('utf-8')
-    # except Exception as e:
-    #     body = base64.encodebytes(body).decode('utf-8')
     http = http[:pos].decode('utf-8')
     http = http.split('\r\n')
     if isResponse:
