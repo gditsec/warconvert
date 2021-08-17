@@ -1,3 +1,5 @@
+#-*- coding : utf-8-*-
+
 from xml.dom.minidom import parse
 import base64, json
 from har2warc.har2warc import har2warc
@@ -5,7 +7,15 @@ from har2warc.har2warc import har2warc
 
 def http2json(http, isResponse, url):
     ret = {}
-    http, body = http.split('\r\n\r\n', 1)
+    pos = http.find('\r\n\r\n'.encode('utf-8'))
+    body = http[pos + 4:]
+    # body有可能是二进制文件，如图片、视频，此时会decode出错，应该直接输出文件
+    # TODO
+    try:
+        body = body.decode('utf-8', 'ignore')
+    except Exception as e:
+        body = ''
+    http = http[:pos].decode('utf-8')
     http = http.split('\r\n')
     if isResponse:
         bodyLength = 0
@@ -49,7 +59,7 @@ def http2json(http, isResponse, url):
                 })
         return ret
 
-DOMTree = parse('h3c/h3c.xml')
+DOMTree = parse('data/h3c/h3c.xml')
 collection = DOMTree.documentElement
 
 items = collection.getElementsByTagName('item')
@@ -91,20 +101,21 @@ for item in items:
         'pageref': ''
     }
     url = item.getElementsByTagName('url')[0].childNodes[0].data
+    # mime = item.getElementsByTagName('mimetype')[0].childNodes[0].data
     req = item.getElementsByTagName('request')[0]
     if req.getAttribute('base64'):
         req = base64.decodestring(req
                     .childNodes[0].data.encode('utf-8'))
-        req = http2json(req.decode('utf-8'), False, url)
+        req = http2json(req, False, url)
     else:
-        req = http2json(req.childNodes[0].data.encode('utf-8').decode('utf-8'), False, url)
+        req = http2json(req.childNodes[0].data.encode('utf-8'), False, url)
     res = item.getElementsByTagName('response')[0]
     if res.getAttribute('base64'):
         res = base64.decodestring(res
                     .childNodes[0].data.encode('utf-8'))
-        res = http2json(res.decode('utf-8', errors='ignore'), True, url)
+        res = http2json(res, True, url)
     else:
-        res = http2json(res.childNodes[0].data.encode('utf-8').decode('utf-8'), True, url)
+        res = http2json(res.childNodes[0].data.encode('utf-8'), True, url)
     entry['response'] = res
     entry['request'] = req
     harContent['log']['entries'].append(entry)
