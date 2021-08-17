@@ -11,10 +11,11 @@ def http2json(http, isResponse, url):
     body = http[pos + 4:]
     # body有可能是二进制文件，如图片、视频，此时会decode出错，应该直接输出文件
     # TODO
-    try:
-        body = body.decode('utf-8', 'ignore')
-    except Exception as e:
-        body = ''
+    body = base64.encodebytes(body).decode('utf-8')
+    # try:
+    #     body = body.decode('utf-8')
+    # except Exception as e:
+    #     body = base64.encodebytes(body).decode('utf-8')
     http = http[:pos].decode('utf-8')
     http = http.split('\r\n')
     if isResponse:
@@ -40,7 +41,8 @@ def http2json(http, isResponse, url):
         ret['content'] = {
             'size': bodyLength,
             'mimeType': bodyType,
-            'text': body
+            'text': body,
+            'encoding': 'base64'
         }
         return ret
     else:
@@ -59,7 +61,7 @@ def http2json(http, isResponse, url):
                 })
         return ret
 
-DOMTree = parse('data/h3c/h3c.xml')
+DOMTree = parse('data/webray/burp.xml')
 collection = DOMTree.documentElement
 
 items = collection.getElementsByTagName('item')
@@ -126,8 +128,8 @@ for item in items:
     })
 
 
-with open('h3c.har', 'w') as harFile:
+with open('output/webray.har', 'w') as harFile:
     harFile.write(json.dumps(harContent))
 
 
-har2warc('h3c.har', 'h3c.warc')
+har2warc('output/webray.har', 'output/webray.warc')
