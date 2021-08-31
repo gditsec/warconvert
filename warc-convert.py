@@ -1,7 +1,8 @@
 #-*- coding : utf-8-*-
 
-from xml.dom.minidom import parse
+import sys, os
 import base64, json
+from xml.dom.minidom import parse
 from har2warc.har2warc import har2warc
 
 
@@ -56,75 +57,92 @@ def http2json(http, isResponse, url):
                 })
         return ret
 
-DOMTree = parse('data/webray/burp.xml')
-collection = DOMTree.documentElement
 
-items = collection.getElementsByTagName('item')
+def main(filename, outfile):
+    print('Loading XML file...')
+    DOMTree = parse(filename)
+    collection = DOMTree.documentElement
 
+    items = collection.getElementsByTagName('item')
 
-harContent = {
-    'log': {
-        'pages': [],
-        'entries': [],
-        'creator': {
-            'name': 'gditsec',
+    harContent = {
+        'log': {
+            'pages': [],
+            'entries': [],
+            'creator': {
+                'name': 'gditsec',
+                'version': '1.0'
+            },
             'version': '1.0'
-        },
-        'version': '1.0'
+        }
     }
-}
 
-for item in items:
-    startedTime = item.getElementsByTagName('time')[0].childNodes[0].data
-    entry = {
-        'startedDateTime': startedTime,
-        'time': 0,
-        'request': {},
-        'response': {},
-        'cache': {
-            'beforeRequest': {},
-            'afterRequest': {},
-            'comment': ''
-        },
-        'timeings': {
-            'blocked': 0,
-            'dns': 0,
-            'connect': 0,
-            'send': 0,
-            'wait': 0,
-            'receive': 0,
-            'ssl': 0
-        },
-        'pageref': ''
-    }
-    url = item.getElementsByTagName('url')[0].childNodes[0].data
-    # mime = item.getElementsByTagName('mimetype')[0].childNodes[0].data
-    req = item.getElementsByTagName('request')[0]
-    if req.getAttribute('base64'):
-        req = base64.decodestring(req
-                    .childNodes[0].data.encode('utf-8'))
-        req = http2json(req, False, url)
+    for item in items:
+        startedTime = item.getElementsByTagName('time')[0].childNodes[0].data
+        entry = {
+            'startedDateTime': startedTime,
+            'time': 0,
+            'request': {},
+            'response': {},
+            'cache': {
+                'beforeRequest': {},
+                'afterRequest': {},
+                'comment': ''
+            },
+            'timeings': {
+                'blocked': 0,
+                'dns': 0,
+                'connect': 0,
+                'send': 0,
+                'wait': 0,
+                'receive': 0,
+                'ssl': 0
+            },
+            'pageref': ''
+        }
+        url = item.getElementsByTagName('url')[0].childNodes[0].data
+        req = item.getElementsByTagName('request')[0]
+        if req.getAttribute('base64'):
+            req = base64.decodestring(req
+                        .childNodes[0].data.encode('utf-8'))
+            req = http2json(req, False, url)
+        else:
+            req = http2json(req.childNodes[0].data.encode('utf-8'), False, url)
+        res = item.getElementsByTagName('response')[0]
+        if res.getAttribute('base64'):
+            res = base64.decodestring(res
+                        .childNodes[0].data.encode('utf-8'))
+            res = http2json(res, True, url)
+        else:
+            res = http2json(res.childNodes[0].data.encode('utf-8'), True, url)
+        entry['response'] = res
+        entry['request'] = req
+        harContent['log']['entries'].append(entry)
+        harContent['log']['pages'].append({
+            'startedDateTime': startedTime,
+            'id': url,
+            'title': ''
+        })
+    print('Finished.')
+    print('Converting to har file...')
+    with open('tmp.har', 'w') as harFile:
+        harFile.write(json.dumps(harContent))
+    print('Finished.')
+    print('Converting to warc file...')
+    har2warc('tmp.har', outfile)
+    os.unlink('tmp.har')
+    print('Finished.')
+
+
+if __name__ == '__main__':
+    banner = '''
+ __      ____ _ _ __ ___ ___ _ __ 
+ \ \ /\ / / _` | '__/ __/ _ \ '__|
+  \ V  V / (_| | | | (_|  __/ |   
+   \_/\_/ \__,_|_|  \___\___|_|
+    '''
+    print(banner)
+    if len(sys.argv) == 0 or len(sys.argv) != 3 or sys.argv[1] == '-h':
+        print('usage: python warc-convert.py xmlfile.xml outfile.warc')
     else:
-        req = http2json(req.childNodes[0].data.encode('utf-8'), False, url)
-    res = item.getElementsByTagName('response')[0]
-    if res.getAttribute('base64'):
-        res = base64.decodestring(res
-                    .childNodes[0].data.encode('utf-8'))
-        res = http2json(res, True, url)
-    else:
-        res = http2json(res.childNodes[0].data.encode('utf-8'), True, url)
-    entry['response'] = res
-    entry['request'] = req
-    harContent['log']['entries'].append(entry)
-    harContent['log']['pages'].append({
-        'startedDateTime': startedTime,
-        'id': url,
-        'title': ''
-    })
-
-
-with open('output/webray.har', 'w') as harFile:
-    harFile.write(json.dumps(harContent))
-
-
-har2warc('output/webray.har', 'output/webray.warc')
+        main(sys.argv[1], sys.argv[2])
