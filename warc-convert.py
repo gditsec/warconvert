@@ -1,7 +1,9 @@
 #-*- coding : utf-8-*-
 
 import sys, os
+import datetime
 import base64, json
+import hashlib
 from xml.dom.minidom import parse
 from har2warc.har2warc import har2warc
 
@@ -78,7 +80,8 @@ def main(filename, outfile):
     }
 
     for item in items:
-        startedTime = item.getElementsByTagName('time')[0].childNodes[0].data
+        startedTime = datetime.datetime.strptime(item.getElementsByTagName('time')[0].childNodes[0].data, "%a %b %d %H:%M:%S CST %Y")
+        startedTime = startedTime.strftime("%Y-%m-%d %H:%M:%S")
         entry = {
             'startedDateTime': startedTime,
             'time': 0,
@@ -121,7 +124,7 @@ def main(filename, outfile):
         harContent['log']['pages'].append({
             'startedDateTime': startedTime,
             'id': url,
-            'title': ''
+            'title': url
         })
     print('Finished.')
     print('Converting to har file...')
@@ -130,7 +133,7 @@ def main(filename, outfile):
     print('Finished.')
     print('Converting to warc file...')
     har2warc('tmp.har', outfile)
-    os.unlink('tmp.har')
+    # os.unlink('tmp.har')
     print('Finished.')
 
 
