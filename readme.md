@@ -6,6 +6,13 @@
 
 burp-webarchive是基于`har2warc`开发的网站缓存文件转换工具，它可以将从BurpSuite导出的XML文件转换成WARC格式的网站缓存文件，因此你可以快捷地将BurpSuite访问过的网站缓存起来，必要时重新渲染并浏览。
 
+## 快速开始
+
+```bash
+python3 -m pip install warconvert
+python3 -m warconvert burp2warc input.xml output.warc
+```
+
 ## 截图
 
 程序运行界面展示：
