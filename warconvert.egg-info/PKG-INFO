@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: warconvert
-Version: 0.0.4
+Version: 0.0.5
 Summary: A tool for converting BurpSuite xml file to har file or warc file.
 Home-page: https://github.com/gditsec/warconvert
 Author: gditsec

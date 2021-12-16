@@ -1,2 +1,4 @@
 .vscode/launch.json
 dist/*
+warconvert/__pycache__/*
+warconvert/warconvert.egg-info/*
