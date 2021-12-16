@@ -12,8 +12,10 @@ build:
 
 publish-test:
 	make clean
+	make build
 	python3 -m twine upload --repository testpypi dist/*
 
 publish:
 	make clean
+	make build
 	python3 -m twine upload dist/*
