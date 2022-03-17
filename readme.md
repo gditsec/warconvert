@@ -7,9 +7,11 @@ burp-webarchive是基于 `har2warc` 开发的网站缓存文件转换工具，�
 ## 0x01 快速开始
 
 ```bash
-python3 -m pip install warconvert
+python3 -m pip install warconvert har2warc
 python3 -m warconvert burp2warc input.xml output.warc
 ```
+
+![](./docs/install.gif)
 
 ## 0x02 使用 BurpSuite
 
