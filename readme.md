@@ -13,7 +13,7 @@ python3 -m warconvert burp2warc input.xml output.warc
 
 ## 0x02 使用 BurpSuite
 
-[![](./docs/test.png)](./docs/demo.mkv "Demo")
+![](./docs/demo.gif)
 
 ## 0x02 截图
 
